@@ -1,0 +1,42 @@
+project:
+  name: "RoadGuard AI"
+
+model:
+  vehicle_model: "yolo11n.pt"
+  helmet_model: "models/helmet_detector.pt"
+  confidence_threshold: 0.35
+
+tracking:
+  tracker: "bytetrack.yaml"
+  min_track_length: 8
+
+video:
+  input_path: "data/raw/videos/test.mp4"
+  output_path: "outputs/processed_videos/output.mp4"
+  frame_skip: 1
+
+classes:
+  vehicles: ["car", "truck", "bus", "motorcycle"]
+  pedestrians: ["person"]
+
+lanes:
+  lane_1:
+    points: [[100, 300], [300, 300], [350, 700], [50, 700]]
+    expected_direction: "down"
+
+  lane_2:
+    points: [[310, 300], [500, 300], [620, 700], [360, 700]]
+    expected_direction: "down"
+
+zones:
+  road_zone:
+    points: [[80, 250], [650, 250], [750, 720], [30, 720]]
+
+  crosswalk_zone:
+    points: [[200, 450], [600, 450], [650, 520], [180, 520]]
+
+thresholds:
+  wrong_way_min_movement: 40
+  high_congestion_vehicle_count: 15
+  medium_congestion_vehicle_count: 7
+

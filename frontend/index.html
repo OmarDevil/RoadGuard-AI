@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoadGuard AI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell upload-shell">
+    <section class="upload-panel">
+      <div class="brand-block">
+        <p class="eyebrow">Smart Traffic Analytics</p>
+        <h1>RoadGuard AI</h1>
+        <p class="subtitle">Upload a traffic video, run the computer vision pipeline, and review road analytics in the dashboard.</p>
+      </div>
+
+      <div class="upload-card">
+        <label class="file-drop" for="videoFile">
+          <span class="file-title">Traffic video</span>
+          <span id="fileName" class="file-name">Choose MP4, AVI, MOV, MKV, or WebM</span>
+          <input id="videoFile" type="file" accept="video/*">
+        </label>
+
+        <div class="action-row">
+          <button id="uploadBtn" class="primary-button" type="button">Upload</button>
+          <button id="analyzeBtn" class="secondary-button" type="button" disabled>Analyze</button>
+        </div>
+
+        <div id="statusMessage" class="status-message">API: waiting for upload</div>
+        <a id="dashboardLink" class="dashboard-link hidden" href="dashboard.html">Open dashboard</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

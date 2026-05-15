@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoadGuard AI Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <main class="shell dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <p class="eyebrow">RoadGuard AI</p>
+        <h1 id="videoTitle">Dashboard</h1>
+      </div>
+      <a class="secondary-button compact-link" href="index.html">New analysis</a>
+    </header>
+
+    <section class="video-grid">
+      <div class="video-panel">
+        <video id="processedVideo" controls muted></video>
+        <div id="videoStatus" class="status-message">Loading video...</div>
+      </div>
+
+      <div class="summary-grid">
+        <article class="metric-card">
+          <span>Total Vehicles</span>
+          <strong id="totalVehicles">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Congestion</span>
+          <strong id="congestionLevel">Low</strong>
+        </article>
+        <article class="metric-card">
+          <span>Total Violations</span>
+          <strong id="totalViolations">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Busiest Lane</span>
+          <strong id="busiestLane">-</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <article class="chart-card">
+        <h2>Vehicles Per Lane</h2>
+        <canvas id="laneChart"></canvas>
+      </article>
+      <article class="chart-card">
+        <h2>Violation Types</h2>
+        <canvas id="violationChart"></canvas>
+      </article>
+      <article class="chart-card wide">
+        <h2>Congestion Timeline</h2>
+        <canvas id="congestionChart"></canvas>
+      </article>
+    </section>
+
+    <section class="table-panel">
+      <div class="table-header">
+        <h2>Violations</h2>
+        <div class="violation-totals">
+          <span>Wrong-way: <strong id="wrongWayCount">0</strong></span>
+          <span>Helmet: <strong id="helmetCount">0</strong></span>
+          <span>Pedestrian: <strong id="pedestrianCount">0</strong></span>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Frame Number</th>
+              <th>Track ID</th>
+              <th>Violation Type</th>
+              <th>Confidence</th>
+              <th>Screenshot</th>
+            </tr>
+          </thead>
+          <tbody id="violationsTable">
+            <tr>
+              <td colspan="5">No violations loaded.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
