@@ -16,14 +16,27 @@ function initUploadPage() {
   const analyzeBtn = document.getElementById("analyzeBtn");
   const statusMessage = document.getElementById("statusMessage");
   const dashboardLink = document.getElementById("dashboardLink");
+  const progressPanel = document.getElementById("analysisProgress");
   let uploadedVideoId = null;
+  let selectedVideoDurationSeconds = null;
+  let progressController = null;
 
-  fileInput.addEventListener("change", () => {
+  fileInput.addEventListener("change", async () => {
     const file = fileInput.files[0];
     fileName.textContent = file ? file.name : "Choose MP4, AVI, MOV, MKV, or WebM";
     analyzeBtn.disabled = true;
     uploadedVideoId = null;
+    selectedVideoDurationSeconds = null;
     dashboardLink.classList.add("hidden");
+    resetAnalysisProgress();
+
+    if (file) {
+      selectedVideoDurationSeconds = await readVideoDuration(file);
+      const durationText = selectedVideoDurationSeconds
+        ? ` - ${formatDuration(selectedVideoDurationSeconds)}`
+        : "";
+      fileName.textContent = `${file.name}${durationText}`;
+    }
   });
 
   uploadBtn.addEventListener("click", async () => {
@@ -36,6 +49,7 @@ function initUploadPage() {
     const formData = new FormData();
     formData.append("file", file);
     setStatus(statusMessage, "Uploading video...");
+    resetAnalysisProgress();
 
     try {
       const response = await fetch(`${API_BASE}/upload-video`, {
@@ -58,19 +72,26 @@ function initUploadPage() {
     }
 
     analyzeBtn.disabled = true;
+    uploadBtn.disabled = true;
     setStatus(statusMessage, "Analysis running. This can take several minutes for longer videos...");
+    progressPanel.classList.remove("hidden");
+    progressController = startAnalysisProgressEstimate(fileInput.files[0], selectedVideoDurationSeconds);
 
     try {
       const response = await fetch(`${API_BASE}/analyze/${uploadedVideoId}`, { method: "POST" });
       const result = await readJson(response);
+      finishAnalysisProgress(progressController);
       window.localStorage.setItem(`roadguard:lastResult:${uploadedVideoId}`, JSON.stringify(result));
       dashboardLink.href = `dashboard.html?video_id=${uploadedVideoId}`;
       dashboardLink.classList.remove("hidden");
       setStatus(statusMessage, "Analysis complete.");
     } catch (error) {
+      failAnalysisProgress(progressController);
       setStatus(statusMessage, error.message, true);
     } finally {
       analyzeBtn.disabled = false;
+      uploadBtn.disabled = false;
+      progressController = null;
     }
   });
 }
@@ -295,6 +316,136 @@ function setDashboardStatus(message, isError = false) {
   setStatus(document.getElementById("videoStatus"), message, isError);
 }
 
+function startAnalysisProgressEstimate(file, durationSeconds) {
+  const startedAt = Date.now();
+  const estimatedSeconds = estimateAnalysisDurationSeconds(file, durationSeconds);
+  const controller = { timerId: null, done: false };
+
+  updateProgressBar({
+    percent: 1,
+    label: "Preparing analysis...",
+    elapsedSeconds: 0,
+    remainingSeconds: estimatedSeconds,
+  });
+
+  controller.timerId = window.setInterval(() => {
+    const elapsedSeconds = (Date.now() - startedAt) / 1000;
+    const rawPercent = (elapsedSeconds / estimatedSeconds) * 95;
+    const percent = Math.min(95, Math.max(1, rawPercent));
+    const remainingSeconds = Math.max(0, estimatedSeconds - elapsedSeconds);
+    const label = percent >= 95 ? "Finalizing output video..." : "Analyzing video...";
+
+    updateProgressBar({
+      percent,
+      label,
+      elapsedSeconds,
+      remainingSeconds,
+    });
+  }, 500);
+
+  return controller;
+}
+
+function finishAnalysisProgress(controller) {
+  stopProgressTimer(controller);
+  updateProgressBar({
+    percent: 100,
+    label: "Analysis complete",
+    elapsedSeconds: null,
+    remainingSeconds: 0,
+  });
+}
+
+function failAnalysisProgress(controller) {
+  stopProgressTimer(controller);
+  const progressLabel = document.getElementById("progressLabel");
+  if (progressLabel) {
+    progressLabel.textContent = "Analysis failed";
+  }
+}
+
+function resetAnalysisProgress() {
+  document.getElementById("analysisProgress")?.classList.add("hidden");
+  updateProgressBar({
+    percent: 0,
+    label: "Analysis pending",
+    elapsedSeconds: 0,
+    remainingSeconds: null,
+  });
+}
+
+function stopProgressTimer(controller) {
+  if (controller?.timerId) {
+    window.clearInterval(controller.timerId);
+  }
+}
+
+function updateProgressBar({ percent, label, elapsedSeconds, remainingSeconds }) {
+  const safePercent = Math.round(Math.max(0, Math.min(100, percent)));
+  const progressFill = document.getElementById("progressFill");
+  const progressTrack = document.getElementById("progressTrack");
+  const progressLabel = document.getElementById("progressLabel");
+  const progressPercent = document.getElementById("progressPercent");
+  const elapsedTime = document.getElementById("elapsedTime");
+  const remainingTime = document.getElementById("remainingTime");
+
+  if (progressFill) {
+    progressFill.style.width = `${safePercent}%`;
+  }
+  if (progressTrack) {
+    progressTrack.setAttribute("aria-valuenow", String(safePercent));
+  }
+  if (progressLabel) {
+    progressLabel.textContent = label;
+  }
+  if (progressPercent) {
+    progressPercent.textContent = `${safePercent}%`;
+  }
+  if (elapsedTime && elapsedSeconds !== null) {
+    elapsedTime.textContent = `Elapsed: ${formatDuration(elapsedSeconds)}`;
+  }
+  if (remainingTime) {
+    remainingTime.textContent = remainingSeconds === null
+      ? "Remaining: estimating..."
+      : `Remaining: ${formatDuration(remainingSeconds)}`;
+  }
+}
+
+function estimateAnalysisDurationSeconds(file, durationSeconds) {
+  const fileSizeMb = file ? file.size / (1024 * 1024) : 0;
+  const durationEstimate = durationSeconds ? durationSeconds * 2.5 : 0;
+  const sizeEstimate = fileSizeMb * 1.4;
+  return clamp(Math.max(20, durationEstimate, sizeEstimate), 20, 30 * 60);
+}
+
+function readVideoDuration(file) {
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(Number.isFinite(video.duration) ? video.duration : null);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+    video.src = objectUrl;
+  });
+}
+
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -303,4 +454,3 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-

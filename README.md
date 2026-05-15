@@ -87,6 +87,12 @@ Run the API:
 uvicorn api.main:app --reload
 ```
 
+Windows quick start:
+
+```bat
+run.bat
+```
+
 Open the frontend:
 
 ```text
@@ -173,4 +179,3 @@ The pipeline writes:
 ## Author
 
 AI Engineering Student Portfolio Project
-

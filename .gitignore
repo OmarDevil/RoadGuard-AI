@@ -1,7 +1,9 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+.idea/
 *.log
 .env
 
@@ -14,9 +16,12 @@ outputs/frames/*
 !outputs/frames/.gitkeep
 outputs/screenshots/*
 !outputs/screenshots/.gitkeep
+outputs/reports/*
+!outputs/reports/.gitkeep
 
 database/*.db
 !database/.gitkeep
 
+*.pt
 models/*.pt
 !models/README.md

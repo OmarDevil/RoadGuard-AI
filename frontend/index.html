@@ -27,6 +27,27 @@
           <button id="analyzeBtn" class="secondary-button" type="button" disabled>Analyze</button>
         </div>
 
+        <div id="analysisProgress" class="progress-panel hidden" aria-live="polite">
+          <div class="progress-meta">
+            <span id="progressLabel">Analysis pending</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div
+            id="progressTrack"
+            class="progress-track"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <div class="progress-details">
+            <span id="elapsedTime">Elapsed: 00:00</span>
+            <span id="remainingTime">Remaining: estimating...</span>
+          </div>
+        </div>
+
         <div id="statusMessage" class="status-message">API: waiting for upload</div>
         <a id="dashboardLink" class="dashboard-link hidden" href="dashboard.html">Open dashboard</a>
       </div>
@@ -36,4 +57,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
